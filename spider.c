@@ -84,8 +84,9 @@ int main(int argc, char *argv[])
         printf("请按要求输入！");
 		return 0;
 	}
+		printf("filename:%s\n", argv[2]);
+    result = fopen(argv[2], "w");
 	chdir("downpage");
-    result = fopen("result", "w");
 	putlinks2queue(argv + 1, argc - 1);	/*把用户命令行提供的link放入待爬取url队列 */
 
 
