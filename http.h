@@ -107,14 +107,7 @@ int sendRequest(Url * url, int fd)
 void *recvResponse(Ev_arg *arg)
 {
 	Url *url = arg->url;
-	int linetmp = 0;
     
-    fprintf(result, "line %d: url = ", line++);
-    printf("line %d: url = %s\n", line,arg->url->path);
-	linetmp = line;
-    fprintf(result, url->domain);
-    fprintf(result, url->path);
-    fprintf(result, "\n");
 	int fd = arg->fd;
 	char *fn = link2fn(url);	/*以url作为文件名，斜线转换为下划线 */
 	int htmlfd = open(fn, O_WRONLY | O_CREAT | O_APPEND, 0644);	/*以只写方式打开html文件 */
@@ -131,7 +124,9 @@ void *recvResponse(Ev_arg *arg)
 	printf("开始下载fd=%d, url=%s%s \n",fd,url->domain,url->path);
 	int i, n, need, ll = 0;
 	char buf[10000] = { 0 };
+	int kb = 0;
 	while (1) {
+		kb += 1;
 		need = sizeof(buf) - 1 - ll;
 		n = read(fd, buf, need);
 		if (n < 0) {
@@ -153,6 +148,12 @@ void *recvResponse(Ev_arg *arg)
 			ll = extractLink(buf, url->domain, url);
 		}
 	}
+    fprintf(result, "line %d: url = ", line++);
+    printf("line %d: url = %s\n", line,arg->url->path);
+    fprintf(result, url->domain);
+    fprintf(result, url->path);
+    fprintf(result, " size: %dkb \n",kb);
+    printf("line %d: \n", line);
 	close(htmlfd);
 	//fprintf(stderr,"获取http响应成功==>%s%s\n",url->host,url->resource);
 	//freeUrl(url);

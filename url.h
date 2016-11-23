@@ -164,7 +164,6 @@ int leftshift(char *buf)
 /*从字符串中抽取所有的超链接，移除左侧包含所有超链接的最短子串，返回剩余子串的长度*/
 int extractLink(char *buf, char *domain, Url *url)
 {
-	printf("inside extrace\n");
 	const char *regex = "href=\"[^ >]*\"";
 	regex_t preg;
 	const size_t nmatch = 10;
@@ -187,19 +186,25 @@ int extractLink(char *buf, char *domain, Url *url)
 			tmp = (char *)calloc(len + 1, 1);
 			strncpy(tmp, buf + bpos, len);
 			tmp[len] = '\0';
-			printf("直接读出的超接：|%s|\n",tmp);
+			//printf("直接读出的超接：|%s|\n",tmp);
 			char *link = patchlink(tmp, url);
 			free(tmp);
-			printf("补全之后的超接：|%s|\n",link);
-			links[i] = link;
+			//printf("补全之后的超接：|%s|%s|\n",link);
+			if(link == NULL){
+				links[i] = NULL;
+			}else if(strlen(link) > 400){
+				links[i] = NULL;
+			}else if ( strstr(link,"http") != NULL){
+				links[i] = NULL;
+			}else if ( strstr(link,"#") != NULL){
+				links[i] = NULL;
+			}else{
+				links[i] = link;
+			}
 		}
-	printf("inside extrace1\n");
 	    pthread_mutex_lock(&queue_lock);
-	printf("inside extrace2\n");
 		putlinks2queue(links, nmatch);
-	printf("inside extrace3\n");
 	    pthread_mutex_unlock(&queue_lock);
-	printf("inside extrace4\n");
 		//free(links);
 		return leftshift(buf + pm[nmatch - 1].rm_eo);
 	}

@@ -5,7 +5,7 @@
 #include"http.h"
 #include "threadpool.c"
 
-#define MAX_QUEUE_SIZE 300
+#define MAX_QUEUE_SIZE 30000
 #include <cstdint>
 
 map < string, string > host_ip_map;
@@ -38,6 +38,10 @@ void *func(void *arg)
 			url = url_queue.front();
 			url_queue.pop();
 			pthread_mutex_unlock(&queue_lock);
+			if(url == NULL){
+				printf("已经弹出\n");
+				continue;
+			}
 		}
 		//pthread_mutex_lock(&queue_lock);
 		//pthread_mutex_unlock(&queue_lock);
@@ -55,7 +59,8 @@ void *func(void *arg)
 		ev.events = EPOLLIN | EPOLLET;	//设置要处理的事件类型。可读，边缘触发
 		printf("将要把sockfd=%d, url=%s%s 放入epoll\n", sockfd, url->domain, url->path);
 		epoll_ctl(epfd_l, EPOLL_CTL_ADD, sockfd, &ev);	//注册ev
-		while(1){
+		bool flag = true;
+		while(flag){
 			usleep(10);
 		n = epoll_wait(epfd_l, events, 10, 1000);	/*等待sockfd可读，即等待http response */
 		for (i = 0; i < n; ++i) {
@@ -63,8 +68,11 @@ void *func(void *arg)
 			printf("%d准备就绪\n",arg->fd);
 		//	CreateThread(recvResponse, arg, NULL, NULL);
 			recvResponse(arg);
+			flag = false;
 		}
+		close(sockfd);
 		}
+		epoll_ctl(epfd_l, EPOLL_CTL_DEL, sockfd, &ev);	//注册ev
 	}
      return NULL;
  }
@@ -81,7 +89,7 @@ int main(int argc, char *argv[])
 	putlinks2queue(argv + 1, argc - 1);	/*把用户命令行提供的link放入待爬取url队列 */
 
 
-  if(tpool_create(5) != 0) {
+  if(tpool_create(20) != 0) {
       printf("tpool_create failed\n");
       exit(1);
   }
